@@ -4,13 +4,14 @@ import { supabase } from "@/src/lib/supabase";
 
 export default function CreateInvoice() {
     const [customer, setCustomer] = useState("");
+    const [email, setEmail] = useState(""); // 🟢 جديد
     const [amount, setAmount] = useState("");
     const [status, setStatus] = useState("pending");
-    const [dueDate, setDueDate] = useState(""); // 🟣 جديد
+    const [dueDate, setDueDate] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleSave = async () => {
-        if (!customer || !amount || !dueDate) {
+        if (!customer || !amount || !dueDate || !email) {
             alert("Please fill all fields");
             return;
         }
@@ -29,10 +30,11 @@ export default function CreateInvoice() {
 
         const { error } = await supabase.from("invoices").insert([
             {
-                customer: customer,
+                customer,
+                email, // 🔥 جديد
                 amount: Number(amount),
-                status: status,
-                due_date: dueDate, // 🔥 أهم إضافة
+                status,
+                due_date: dueDate,
                 user_id: user.id,
             },
         ]);
@@ -46,9 +48,10 @@ export default function CreateInvoice() {
             alert("Invoice saved successfully ✅");
 
             setCustomer("");
+            setEmail("");
             setAmount("");
             setStatus("pending");
-            setDueDate(""); // reset
+            setDueDate("");
         }
     };
 
@@ -59,6 +62,7 @@ export default function CreateInvoice() {
             </h1>
 
             <div className="bg-white p-6 rounded-xl shadow max-w-lg">
+
                 {/* Customer */}
                 <div className="mb-4">
                     <label className="block mb-1 font-medium">
@@ -69,6 +73,20 @@ export default function CreateInvoice() {
                         value={customer}
                         onChange={(e) => setCustomer(e.target.value)}
                         className="w-full border p-2 rounded"
+                    />
+                </div>
+
+                {/* 🟢 Email */}
+                <div className="mb-4">
+                    <label className="block mb-1 font-medium">
+                        Email
+                    </label>
+                    <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full border p-2 rounded"
+                        placeholder="example@email.com"
                     />
                 </div>
 
@@ -85,7 +103,7 @@ export default function CreateInvoice() {
                     />
                 </div>
 
-                {/* 🟣 Due Date */}
+                {/* Due Date */}
                 <div className="mb-4">
                     <label className="block mb-1 font-medium">
                         Due Date
@@ -113,7 +131,6 @@ export default function CreateInvoice() {
                     </select>
                 </div>
 
-                {/* Button */}
                 <button
                     onClick={handleSave}
                     disabled={loading}
