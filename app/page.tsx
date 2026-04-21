@@ -77,6 +77,20 @@ export default function Home() {
     doc.save(`invoice-${inv.id}.pdf`);
   };
 
+  // 🟢 🔥 EMAIL FUNCTION
+  const sendEmail = async (inv: any) => {
+    await fetch("/api/send-email", {
+      method: "POST",
+      body: JSON.stringify({
+        email: inv.email,
+        customer: inv.customer,
+        amount: inv.amount,
+      }),
+    });
+
+    alert("Email sent ✅");
+  };
+
   // 🔴 Overdue logic
   const today = new Date();
 
@@ -136,7 +150,7 @@ export default function Home() {
           Dashboard
         </h2>
 
-        {/* 🟢 Stats */}
+        {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-xl shadow">
             <p className="text-gray-500">Total</p>
@@ -159,7 +173,6 @@ export default function Home() {
             </h3>
           </div>
 
-          {/* 🔴 Overdue */}
           <div className="bg-white p-5 rounded-xl shadow border border-red-500">
             <p className="text-red-500">Overdue</p>
             <h3 className="text-xl font-bold text-red-600">
@@ -187,8 +200,7 @@ export default function Home() {
               {invoices.map((inv) => (
                 <tr
                   key={inv.id}
-                  className={`border-b ${isOverdue(inv) ? "bg-red-50" : ""
-                    }`}
+                  className={`border-b ${isOverdue(inv) ? "bg-red-50" : ""}`}
                 >
                   <td className="py-2">{inv.customer}</td>
                   <td className="py-2">EGP {inv.amount}</td>
@@ -197,10 +209,10 @@ export default function Home() {
                   <td className="py-2">
                     <span
                       className={`px-3 py-1 rounded text-white text-sm ${isOverdue(inv)
-                        ? "bg-red-500"
-                        : inv.status === "paid"
-                          ? "bg-green-500"
-                          : "bg-yellow-500"
+                          ? "bg-red-500"
+                          : inv.status === "paid"
+                            ? "bg-green-500"
+                            : "bg-yellow-500"
                         }`}
                     >
                       {isOverdue(inv) ? "overdue" : inv.status}
@@ -226,6 +238,14 @@ export default function Home() {
                       className="bg-purple-500 text-white px-3 py-1 rounded"
                     >
                       PDF
+                    </button>
+
+                    {/* 🔥 EMAIL BUTTON */}
+                    <button
+                      onClick={() => sendEmail(inv)}
+                      className="bg-black text-white px-3 py-1 rounded"
+                    >
+                      Email
                     </button>
                   </td>
                 </tr>
