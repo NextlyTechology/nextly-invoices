@@ -58,7 +58,7 @@ export default function Home() {
     }
   };
 
-  // 🟣 PDF
+  // 🟣 تحميل PDF عادي
   const downloadPDF = (inv: any) => {
     const doc = new jsPDF();
 
@@ -77,21 +77,42 @@ export default function Home() {
     doc.save(`invoice-${inv.id}.pdf`);
   };
 
-  // 🟢 🔥 EMAIL FUNCTION
+  // 🔥 EMAIL + PDF
   const sendEmail = async (inv: any) => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Nextly Invoice", 20, 20);
+
+    doc.setFontSize(12);
+    doc.text(`Customer: ${inv.customer}`, 20, 40);
+    doc.text(`Amount: EGP ${inv.amount}`, 20, 50);
+    doc.text(`Status: ${inv.status}`, 20, 60);
+    doc.text(`Due Date: ${inv.due_date}`, 20, 70);
+
+    const today = new Date().toLocaleDateString();
+    doc.text(`Date: ${today}`, 20, 80);
+
+    // 🔥 نحول PDF لـ base64
+    const pdfBase64 = doc.output("datauristring");
+
     await fetch("/api/send-email", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         email: inv.email,
         customer: inv.customer,
         amount: inv.amount,
+        pdf: pdfBase64,
       }),
     });
 
-    alert("Email sent ✅");
+    alert("Email + PDF sent ✅🔥");
   };
 
-  // 🔴 Overdue logic
+  // 🔴 Overdue
   const today = new Date();
 
   const isOverdue = (inv: any) => {
@@ -200,7 +221,8 @@ export default function Home() {
               {invoices.map((inv) => (
                 <tr
                   key={inv.id}
-                  className={`border-b ${isOverdue(inv) ? "bg-red-50" : ""}`}
+                  className={`border-b ${isOverdue(inv) ? "bg-red-50" : ""
+                    }`}
                 >
                   <td className="py-2">{inv.customer}</td>
                   <td className="py-2">EGP {inv.amount}</td>
@@ -240,7 +262,6 @@ export default function Home() {
                       PDF
                     </button>
 
-                    {/* 🔥 EMAIL BUTTON */}
                     <button
                       onClick={() => sendEmail(inv)}
                       className="bg-black text-white px-3 py-1 rounded"
