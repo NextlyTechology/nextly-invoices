@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     try {
-        // 🔥 نعمل PDF هنا في السيرفر
+        // 🔥 نعمل PDF
         const doc = new jsPDF();
 
         doc.setFontSize(18);
@@ -22,14 +22,24 @@ export async function POST(req: Request) {
         const today = new Date().toLocaleDateString();
         doc.text(`Date: ${today}`, 20, 80);
 
-        // 🔥 نحول لـ base64
-        const pdfBase64 = doc.output("datauristring").split(",")[1];
+        // 🔥 نحول لـ Buffer بدل base64
+        const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
 
         await resend.emails.send({
             from: "onboarding@resend.dev",
             to: body.email,
-            subject: "TEST",
-            html: `<h1>TEST EMAIL</h1>`,
+            subject: "Invoice from Nextly",
+            html: `
+        <h2>Hello ${body.customer}</h2>
+        <p>Your invoice amount is: ${body.amount} EGP</p>
+        <p>📎 PDF attached</p>
+      `,
+            attachments: [
+                {
+                    filename: "invoice.pdf",
+                    content: pdfBuffer, // ✅ الحل هنا
+                },
+            ],
         });
 
         return Response.json({ success: true });
