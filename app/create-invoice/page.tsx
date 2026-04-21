@@ -6,17 +6,17 @@ export default function CreateInvoice() {
     const [customer, setCustomer] = useState("");
     const [amount, setAmount] = useState("");
     const [status, setStatus] = useState("pending");
+    const [dueDate, setDueDate] = useState(""); // 🟣 جديد
     const [loading, setLoading] = useState(false);
 
     const handleSave = async () => {
-        if (!customer || !amount) {
+        if (!customer || !amount || !dueDate) {
             alert("Please fill all fields");
             return;
         }
 
         setLoading(true);
 
-        // 🟢 نجيب اليوزر الحالي
         const {
             data: { user },
         } = await supabase.auth.getUser();
@@ -32,7 +32,8 @@ export default function CreateInvoice() {
                 customer: customer,
                 amount: Number(amount),
                 status: status,
-                user_id: user.id, // 🔥 أهم سطر
+                due_date: dueDate, // 🔥 أهم إضافة
+                user_id: user.id,
             },
         ]);
 
@@ -47,6 +48,7 @@ export default function CreateInvoice() {
             setCustomer("");
             setAmount("");
             setStatus("pending");
+            setDueDate(""); // reset
         }
     };
 
@@ -57,6 +59,7 @@ export default function CreateInvoice() {
             </h1>
 
             <div className="bg-white p-6 rounded-xl shadow max-w-lg">
+                {/* Customer */}
                 <div className="mb-4">
                     <label className="block mb-1 font-medium">
                         Customer Name
@@ -69,6 +72,7 @@ export default function CreateInvoice() {
                     />
                 </div>
 
+                {/* Amount */}
                 <div className="mb-4">
                     <label className="block mb-1 font-medium">
                         Amount (EGP)
@@ -81,6 +85,20 @@ export default function CreateInvoice() {
                     />
                 </div>
 
+                {/* 🟣 Due Date */}
+                <div className="mb-4">
+                    <label className="block mb-1 font-medium">
+                        Due Date
+                    </label>
+                    <input
+                        type="date"
+                        value={dueDate}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        className="w-full border p-2 rounded"
+                    />
+                </div>
+
+                {/* Status */}
                 <div className="mb-4">
                     <label className="block mb-1 font-medium">
                         Status
@@ -95,6 +113,7 @@ export default function CreateInvoice() {
                     </select>
                 </div>
 
+                {/* Button */}
                 <button
                     onClick={handleSave}
                     disabled={loading}

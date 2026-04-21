@@ -4,16 +4,21 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/src/lib/supabase";
 import jsPDF from "jspdf";
+import { useRouter } from "next/navigation"; // 🟢 جديد
 
 export default function Home() {
   const [invoices, setInvoices] = useState<any[]>([]);
+  const router = useRouter(); // 🟢 جديد
 
   const fetchInvoices = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    if (!user) {
+      router.push("/login"); // 🔥 حماية
+      return;
+    }
 
     const { data, error } = await supabase
       .from("invoices")
@@ -30,6 +35,11 @@ export default function Home() {
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   const handleDelete = async (id: string) => {
     const confirmDelete = confirm("Are you sure?");
@@ -67,8 +77,6 @@ export default function Home() {
   };
 
   // 🧠 Stats
-  const totalInvoices = invoices.length;
-
   const totalAmount = invoices.reduce(
     (sum, inv) => sum + Number(inv.amount),
     0
@@ -90,11 +98,21 @@ export default function Home() {
           Nextly
         </h1>
 
-        <Link href="/create-invoice">
-          <button className="bg-green-500 text-white px-4 py-2 rounded-lg">
-            + New Invoice
+        <div className="flex gap-2">
+          <Link href="/create-invoice">
+            <button className="bg-green-500 text-white px-4 py-2 rounded-lg">
+              + New Invoice
+            </button>
+          </Link>
+
+          {/* 🔴 Logout */}
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-2 rounded-lg"
+          >
+            Logout
           </button>
-        </Link>
+        </div>
       </div>
 
       {/* Dashboard */}
