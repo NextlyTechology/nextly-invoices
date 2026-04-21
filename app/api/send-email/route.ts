@@ -28,18 +28,8 @@ export async function POST(req: Request) {
         await resend.emails.send({
             from: "onboarding@resend.dev",
             to: body.email,
-            subject: "Invoice from Nextly",
-            html: `
-        <h2>Hello ${body.customer}</h2>
-        <p>Your invoice amount is: ${body.amount} EGP</p>
-        <p>📎 PDF attached</p>
-      `,
-            attachments: [
-                {
-                    filename: "invoice.pdf",
-                    content: pdfBase64,
-                },
-            ],
+            subject: "TEST",
+            html: `<h1>TEST EMAIL</h1>`,
         });
 
         return Response.json({ success: true });
