@@ -58,8 +58,8 @@ export default function Home() {
     }
   };
 
-  // 🟣 تحميل PDF عادي
-  const downloadPDF = (inv: any) => {
+  // 🟣 تحميل PDF
+  const generatePDF = (inv: any) => {
     const doc = new jsPDF();
 
     doc.setFontSize(18);
@@ -74,42 +74,41 @@ export default function Home() {
     const today = new Date().toLocaleDateString();
     doc.text(`Date: ${today}`, 20, 80);
 
+    return doc;
+  };
+
+  const downloadPDF = (inv: any) => {
+    const doc = generatePDF(inv);
     doc.save(`invoice-${inv.id}.pdf`);
   };
 
-  // 🔥 EMAIL + PDF
+  // 🔥 EMAIL + PDF (FIXED)
   const sendEmail = async (inv: any) => {
-    const doc = new jsPDF();
+    const doc = generatePDF(inv);
 
-    doc.setFontSize(18);
-    doc.text("Nextly Invoice", 20, 20);
+    const pdfBlob = doc.output("blob");
 
-    doc.setFontSize(12);
-    doc.text(`Customer: ${inv.customer}`, 20, 40);
-    doc.text(`Amount: EGP ${inv.amount}`, 20, 50);
-    doc.text(`Status: ${inv.status}`, 20, 60);
-    doc.text(`Due Date: ${inv.due_date}`, 20, 70);
+    const reader = new FileReader();
+    reader.readAsDataURL(pdfBlob);
 
-    const today = new Date().toLocaleDateString();
-    doc.text(`Date: ${today}`, 20, 80);
+    reader.onloadend = async () => {
+      const base64data = reader.result;
 
-    // 🔥 نحول PDF لـ base64
-    const pdfBase64 = doc.output("datauristring");
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: inv.email,
+          customer: inv.customer,
+          amount: inv.amount,
+          pdf: base64data,
+        }),
+      });
 
-    await fetch("/api/send-email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: inv.email,
-        customer: inv.customer,
-        amount: inv.amount,
-        pdf: pdfBase64,
-      }),
-    });
-
-    alert("Email + PDF sent ✅🔥");
+      alert("Email + PDF sent ✅🔥");
+    };
   };
 
   // 🔴 Overdue
@@ -221,8 +220,7 @@ export default function Home() {
               {invoices.map((inv) => (
                 <tr
                   key={inv.id}
-                  className={`border-b ${isOverdue(inv) ? "bg-red-50" : ""
-                    }`}
+                  className={`border-b ${isOverdue(inv) ? "bg-red-50" : ""}`}
                 >
                   <td className="py-2">{inv.customer}</td>
                   <td className="py-2">EGP {inv.amount}</td>
