@@ -6,6 +6,12 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     try {
+        // 🔥 نحول base64 → buffer
+        const pdfBuffer = Buffer.from(
+            body.pdf.split(",")[1],
+            "base64"
+        );
+
         await resend.emails.send({
             from: "onboarding@resend.dev",
             to: body.email,
@@ -16,11 +22,11 @@ export async function POST(req: Request) {
         <p>Your invoice amount is: ${body.amount} EGP</p>
       `,
 
-            // 🔥 هنا السر بقى
+            // 🔥 ده الصح
             attachments: [
                 {
                     filename: "invoice.pdf",
-                    content: body.pdf.split(",")[1], // نحذف prefix
+                    content: pdfBuffer,
                 },
             ],
         });
