@@ -4,22 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/src/lib/supabase";
 import jsPDF from "jspdf";
-import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [invoices, setInvoices] = useState<any[]>([]);
-  const router = useRouter();
 
   const fetchInvoices = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // 🔴 لو مش مسجل دخول
-    if (!user) {
-      router.push("/login");
-      return;
-    }
+    if (!user) return;
 
     const { data, error } = await supabase
       .from("invoices")
@@ -72,18 +66,21 @@ export default function Home() {
     doc.save(`invoice-${inv.id}.pdf`);
   };
 
-  // 🔓 Logout
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
+  // 🧠 Stats
   const totalInvoices = invoices.length;
 
   const totalAmount = invoices.reduce(
     (sum, inv) => sum + Number(inv.amount),
     0
   );
+
+  const paidAmount = invoices
+    .filter((inv) => inv.status === "paid")
+    .reduce((sum, inv) => sum + Number(inv.amount), 0);
+
+  const pendingAmount = invoices
+    .filter((inv) => inv.status === "pending")
+    .reduce((sum, inv) => sum + Number(inv.amount), 0);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -93,20 +90,11 @@ export default function Home() {
           Nextly
         </h1>
 
-        <div className="flex gap-2">
-          <Link href="/create-invoice">
-            <button className="bg-green-500 text-white px-4 py-2 rounded-lg">
-              + New Invoice
-            </button>
-          </Link>
-
-          <button
-            onClick={handleLogout}
-            className="bg-gray-800 text-white px-4 py-2 rounded-lg"
-          >
-            Logout
+        <Link href="/create-invoice">
+          <button className="bg-green-500 text-white px-4 py-2 rounded-lg">
+            + New Invoice
           </button>
-        </div>
+        </Link>
       </div>
 
       {/* Dashboard */}
@@ -115,18 +103,26 @@ export default function Home() {
           Dashboard
         </h2>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* 🟢 Stats */}
+        <div className="grid grid-cols-3 gap-4">
           <div className="bg-white p-5 rounded-xl shadow">
-            <p className="text-gray-500">Total Invoices</p>
+            <p className="text-gray-500">Total</p>
             <h3 className="text-xl font-bold">
-              {totalInvoices}
+              EGP {totalAmount}
             </h3>
           </div>
 
           <div className="bg-white p-5 rounded-xl shadow">
-            <p className="text-gray-500">Total Amount</p>
+            <p className="text-gray-500">Paid</p>
             <h3 className="text-xl font-bold text-green-600">
-              EGP {totalAmount}
+              EGP {paidAmount}
+            </h3>
+          </div>
+
+          <div className="bg-white p-5 rounded-xl shadow">
+            <p className="text-gray-500">Pending</p>
+            <h3 className="text-xl font-bold text-yellow-600">
+              EGP {pendingAmount}
             </h3>
           </div>
         </div>
