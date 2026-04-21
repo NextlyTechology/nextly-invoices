@@ -7,7 +7,6 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     try {
-        // 🔥 نعمل PDF
         const doc = new jsPDF();
 
         doc.setFontSize(18);
@@ -22,8 +21,8 @@ export async function POST(req: Request) {
         const today = new Date().toLocaleDateString();
         doc.text(`Date: ${today}`, 20, 80);
 
-        // 🔥 نحول لـ Buffer بدل base64
-        const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
+        // 🔥 أهم سطر هنا
+        const pdfBase64 = doc.output("arraybuffer");
 
         await resend.emails.send({
             from: "onboarding@resend.dev",
@@ -37,14 +36,14 @@ export async function POST(req: Request) {
             attachments: [
                 {
                     filename: "invoice.pdf",
-                    content: pdfBuffer, // ✅ الحل هنا
+                    content: Buffer.from(pdfBase64), // ✅ ده الحل الصح
                 },
             ],
         });
 
         return Response.json({ success: true });
     } catch (error) {
-        console.log(error);
+        console.log("ERROR:", error);
         return Response.json({ error });
     }
 }
