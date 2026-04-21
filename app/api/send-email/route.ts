@@ -6,27 +6,22 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     try {
-        // 🔥 نحول base64 → buffer
-        const pdfBuffer = Buffer.from(
-            body.pdf.split(",")[1],
-            "base64"
-        );
+        // 🔥 نفصل base64 عن الـ prefix
+        const base64Data = body.pdf.split(",")[1];
 
         await resend.emails.send({
             from: "onboarding@resend.dev",
             to: body.email,
             subject: "Invoice from Nextly",
-
             html: `
         <h2>Hello ${body.customer}</h2>
         <p>Your invoice amount is: ${body.amount} EGP</p>
+        <p>📎 PDF attached</p>
       `,
-
-            // 🔥 ده الصح
             attachments: [
                 {
                     filename: "invoice.pdf",
-                    content: pdfBuffer,
+                    content: base64Data, // ✅ هنا الصح
                 },
             ],
         });
