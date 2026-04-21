@@ -4,11 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/src/lib/supabase";
 import jsPDF from "jspdf";
-import { useRouter } from "next/navigation"; // 🟢 جديد
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [invoices, setInvoices] = useState<any[]>([]);
-  const router = useRouter(); // 🟢 جديد
+  const router = useRouter();
 
   const fetchInvoices = async () => {
     const {
@@ -16,7 +16,7 @@ export default function Home() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.push("/login"); // 🔥 حماية
+      router.push("/login");
       return;
     }
 
@@ -69,11 +69,23 @@ export default function Home() {
     doc.text(`Customer: ${inv.customer}`, 20, 40);
     doc.text(`Amount: EGP ${inv.amount}`, 20, 50);
     doc.text(`Status: ${inv.status}`, 20, 60);
+    doc.text(`Due Date: ${inv.due_date}`, 20, 70);
 
     const today = new Date().toLocaleDateString();
-    doc.text(`Date: ${today}`, 20, 70);
+    doc.text(`Date: ${today}`, 20, 80);
 
     doc.save(`invoice-${inv.id}.pdf`);
+  };
+
+  // 🔴 Overdue logic
+  const today = new Date();
+
+  const isOverdue = (inv: any) => {
+    return (
+      inv.status === "pending" &&
+      inv.due_date &&
+      new Date(inv.due_date) < today
+    );
   };
 
   // 🧠 Stats
@@ -88,6 +100,10 @@ export default function Home() {
 
   const pendingAmount = invoices
     .filter((inv) => inv.status === "pending")
+    .reduce((sum, inv) => sum + Number(inv.amount), 0);
+
+  const overdueAmount = invoices
+    .filter((inv) => isOverdue(inv))
     .reduce((sum, inv) => sum + Number(inv.amount), 0);
 
   return (
@@ -105,7 +121,6 @@ export default function Home() {
             </button>
           </Link>
 
-          {/* 🔴 Logout */}
           <button
             onClick={handleLogout}
             className="bg-red-500 text-white px-4 py-2 rounded-lg"
@@ -122,7 +137,7 @@ export default function Home() {
         </h2>
 
         {/* 🟢 Stats */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-xl shadow">
             <p className="text-gray-500">Total</p>
             <h3 className="text-xl font-bold">
@@ -143,6 +158,14 @@ export default function Home() {
               EGP {pendingAmount}
             </h3>
           </div>
+
+          {/* 🔴 Overdue */}
+          <div className="bg-white p-5 rounded-xl shadow border border-red-500">
+            <p className="text-red-500">Overdue</p>
+            <h3 className="text-xl font-bold text-red-600">
+              EGP {overdueAmount}
+            </h3>
+          </div>
         </div>
 
         {/* Table */}
@@ -154,6 +177,7 @@ export default function Home() {
               <tr className="border-b">
                 <th className="py-2">Customer</th>
                 <th className="py-2">Amount</th>
+                <th className="py-2">Due Date</th>
                 <th className="py-2">Status</th>
                 <th className="py-2">Actions</th>
               </tr>
@@ -161,18 +185,25 @@ export default function Home() {
 
             <tbody>
               {invoices.map((inv) => (
-                <tr key={inv.id} className="border-b">
+                <tr
+                  key={inv.id}
+                  className={`border-b ${isOverdue(inv) ? "bg-red-50" : ""
+                    }`}
+                >
                   <td className="py-2">{inv.customer}</td>
                   <td className="py-2">EGP {inv.amount}</td>
+                  <td className="py-2">{inv.due_date}</td>
 
                   <td className="py-2">
                     <span
-                      className={`px-3 py-1 rounded text-white text-sm ${inv.status === "paid"
+                      className={`px-3 py-1 rounded text-white text-sm ${isOverdue(inv)
+                        ? "bg-red-500"
+                        : inv.status === "paid"
                           ? "bg-green-500"
                           : "bg-yellow-500"
                         }`}
                     >
-                      {inv.status}
+                      {isOverdue(inv) ? "overdue" : inv.status}
                     </span>
                   </td>
 
