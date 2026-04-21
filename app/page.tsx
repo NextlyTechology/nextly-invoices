@@ -58,7 +58,7 @@ export default function Home() {
     }
   };
 
-  // 🟣 تحميل PDF
+  // 🟣 تحميل PDF (local فقط)
   const generatePDF = (inv: any) => {
     const doc = new jsPDF();
 
@@ -82,33 +82,23 @@ export default function Home() {
     doc.save(`invoice-${inv.id}.pdf`);
   };
 
-  // 🔥 EMAIL + PDF (FIXED)
+  // 🔥 EMAIL (server بيعمل PDF)
   const sendEmail = async (inv: any) => {
-    const doc = generatePDF(inv);
+    await fetch("/api/send-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: inv.email,
+        customer: inv.customer,
+        amount: inv.amount,
+        due_date: inv.due_date,
+        status: inv.status,
+      }),
+    });
 
-    const pdfBlob = doc.output("blob");
-
-    const reader = new FileReader();
-    reader.readAsDataURL(pdfBlob);
-
-    reader.onloadend = async () => {
-      const base64data = reader.result;
-
-      await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: inv.email,
-          customer: inv.customer,
-          amount: inv.amount,
-          pdf: base64data,
-        }),
-      });
-
-      alert("Email + PDF sent ✅🔥");
-    };
+    alert("Email + PDF sent ✅🔥");
   };
 
   // 🔴 Overdue
